@@ -3,30 +3,51 @@ from torchvision import datasets
 import torchvision.transforms as transforms
 
 transform_train = transforms.Compose([
-    transforms.Resize(224),
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomCrop(224, padding=4),
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
     transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    transforms.Normalize(mean=(0.485,0.456,0.406),
+                         std=(0.229,0.224,0.225))
 ])
 
 transform_test = transforms.Compose([
-    transforms.Resize(224),
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
     transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    transforms.Normalize(mean=(0.485,0.456,0.406),
+                         std=(0.229,0.224,0.225))
 ])
 
+#---------------------------------------------------------------------------------------------------------------------
 
-training_data = datasets.CIFAR10(root="./data", train=True, download=True, transform=transform_train)
-test_data = datasets.CIFAR10(root="./data", train=False, download=True, transform=transform_test)
+food_training_data = datasets.Food101(root="./data", split="train", download=True, transform=transform_train)
+food_test_data = datasets.Food101(root="./data", split="test", download=True, transform=transform_test)
 
-batch_size = 32
-val_split = 0.1
-val_size = int(len(training_data) * val_split)
-train_size = len(training_data) - val_size
-train_ds, val_ds = random_split(training_data, [train_size, val_size])
+food_batch_size = 32
+food_val_split = 0.1
+food_val_size = int(len(food_training_data) * food_val_split)
+food_train_size = len(food_training_data) - food_val_size
+food_train_ds, food_val_ds = random_split(food_training_data, [food_train_size, food_val_size])
 
-# Create data loaders.
-train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=2)
-val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=2)
-test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=2)
+food_train_loader = DataLoader(food_train_ds, batch_size=food_batch_size, shuffle=True, num_workers=2)
+food_val_loader = DataLoader(food_val_ds, batch_size=food_batch_size, shuffle=False, num_workers=2)
+food_test_loader = DataLoader(food_test_data, batch_size=food_batch_size, shuffle=False, num_workers=2)
+
+food_data_loaders = (food_train_loader, food_test_loader, food_val_loader)
+
+#---------------------------------------------------------------------------------------------------------------------
+
+pet_training_data = datasets.OxfordIIITPet(root="./data", split="trainval", download=True, transform=transform_train)
+pet_test_data = datasets.OxfordIIITPet(root="./data", split="test", download=True, transform=transform_test)
+
+pet_batch_size = 32
+pet_val_split = 0.1
+pet_val_size = int(len(pet_training_data) * pet_val_split)
+pet_train_size = len(pet_training_data) - pet_val_size
+pet_train_ds, pet_val_ds = random_split(pet_training_data, [pet_train_size, pet_val_size])
+
+pet_train_loader = DataLoader(pet_train_ds, batch_size=pet_batch_size, shuffle=True, num_workers=2)
+pet_val_loader = DataLoader(pet_val_ds, batch_size=pet_batch_size, shuffle=False, num_workers=2)
+pet_test_loader = DataLoader(pet_test_data, batch_size=pet_batch_size, shuffle=False, num_workers=2)
+
+pet_data_loaders = (pet_train_loader, pet_test_loader, pet_val_loader)
