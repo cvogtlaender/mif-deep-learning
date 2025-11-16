@@ -12,7 +12,8 @@ class ResNetFinetune(nn.Module):
     else:
       self.model = resnet18(weights=None)
 
-    if freeze_backbone:
+    self.freeze_backbone = freeze_backbone
+    if self.freeze_backbone:
       for param in self.model.parameters():
         param.requires_grad = False
 
@@ -21,3 +22,11 @@ class ResNetFinetune(nn.Module):
 
   def forward(self, x):
     return self.model(x)
+  
+  def train(self, mode: bool = True):
+        super().train(mode)
+        if self.freeze_backbone:
+            for m in self.model.modules():
+                if isinstance(m, nn.BatchNorm2d):
+                    m.eval()
+        return self
