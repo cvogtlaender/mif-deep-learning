@@ -9,12 +9,10 @@ def accuracy(preds, labels):
     _, pred_classes = torch.max(preds, 1)
     return (pred_classes == labels).float().mean().item() * 100
 
-def train_model(model, train_loader, val_loader, device, num_epochs=10, lr=1e-4, 
+def train_model(model, train_loader, val_loader, device, criterion, num_epochs=10, lr=1e-4,
                 optimizer_type="adamw", scheduler_type="cosine", save_path="checkpoints/best_model.pth", early_stopping_patience=5):
     
     Path(save_path).parent.mkdir(exist_ok=True)
-
-    criterion = nn.CrossEntropyLoss()
 
     if optimizer_type.lower() == "adamw":
         optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
