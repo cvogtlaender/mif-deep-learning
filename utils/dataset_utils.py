@@ -34,20 +34,3 @@ food_val_loader = DataLoader(food_val_ds, batch_size=food_batch_size, shuffle=Fa
 food_test_loader = DataLoader(food_test_data, batch_size=food_batch_size, shuffle=False, num_workers=2)
 
 food_data_loaders = (food_train_loader, food_test_loader, food_val_loader)
-
-#---------------------------------------------------------------------------------------------------------------------
-
-pet_training_data = datasets.OxfordIIITPet(root="./data", split="trainval", download=True, transform=transform_train)
-pet_test_data = datasets.OxfordIIITPet(root="./data", split="test", download=True, transform=transform_test)
-
-pet_batch_size = 32
-pet_val_split = 0.1
-pet_val_size = int(len(pet_training_data) * pet_val_split)
-pet_train_size = len(pet_training_data) - pet_val_size
-pet_train_ds, pet_val_ds = random_split(pet_training_data, [pet_train_size, pet_val_size])
-
-pet_train_loader = DataLoader(pet_train_ds, batch_size=pet_batch_size, shuffle=True, num_workers=2)
-pet_val_loader = DataLoader(pet_val_ds, batch_size=pet_batch_size, shuffle=False, num_workers=2)
-pet_test_loader = DataLoader(pet_test_data, batch_size=pet_batch_size, shuffle=False, num_workers=2)
-
-pet_data_loaders = (pet_train_loader, pet_test_loader, pet_val_loader)

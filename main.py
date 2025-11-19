@@ -4,25 +4,24 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from models.vit_finetune import ViTFinetune
 from models.resnet_finetune import ResNetFinetune
-from utils.dataset_utils import pet_data_loaders, food_data_loaders
+from utils.dataset_utils import food_data_loaders
 from utils.train_utils import train_model, evaluate_model
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if torch.cuda.is_available:
-        torch.cuda.set_per_process_memory_fraction(0.8, device=0)
         
     print(f"Device: {device}")
 
     Path("data").mkdir(exist_ok=True)
     Path("checkpoints").mkdir(exist_ok=True)
 
-    train_loader, test_loader, val_loader = pet_data_loaders
+    train_loader, test_loader, val_loader = food_data_loaders
     
-    model = ResNetFinetune(num_classes=101, pretrained=True, freeze_backbone=True).to(device)
+    #model = ViTFinetune(num_classes=101, pretrained=True, freeze_backbone=False).to(device)
+    model = ResNetFinetune(num_classes=101, pretrained=True, freeze_backbone=False).to(device)
 
     criterion = nn.CrossEntropyLoss()
-    history = train_model(model, train_loader, val_loader, device, criterion=criterion, num_epochs=10, lr=1e-3)
+    model, history = train_model(model, train_loader, val_loader, device, criterion=criterion, num_epochs=20, lr=1e-4)
 
     print("Evaluierung auf Testdaten ...")
     model.load_state_dict(torch.load("checkpoints/best_model.pth"))
@@ -50,6 +49,7 @@ def main():
     plt.legend()
 
     plt.tight_layout()
+    plt.savefig("checkpoints/loss_acc", dpi=300)
     plt.show()
 
 if __name__ == "__main__":
