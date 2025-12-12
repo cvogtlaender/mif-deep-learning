@@ -2,9 +2,6 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
-from models.resnet_finetune import ResNetFinetune
-from models.vit_finetune import ViTFinetune
-from utils.dataset_utils import food_data_loaders
 
 
 def get_predictions(model, data_loader, device):
@@ -47,35 +44,9 @@ def plot_confusion_matrix(cm, class_names, normalize=True, save_path="confusion_
     plt.savefig(save_path, dpi=300)
     plt.show()
 
-
-def main():
-    checkpoint_path = "checkpoints/best_model.pth"
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print("Device:", device)
-
-    train_loader, test_loader, val_loader = food_data_loaders
-    class_names = test_loader.dataset.classes
-    num_classes = len(class_names)
-
-    model = ResNetFinetune(
-        num_classes=num_classes, pretrained=True, freeze_backbone=False
-    )
-
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
-    model = model.to(device)
-
-    preds, labels = get_predictions(model, test_loader, device)
-
+def show_confusion_matrix(model, data_loader, device, normalize=True, save_path=f"checkpoints/matrix.png"):
+    preds, labels = get_predictions(model, data_loader, device)
+    class_names = data_loader.dataset.classes
     cm = confusion_matrix(labels, preds)
 
-    plot_confusion_matrix(
-        cm,
-        class_names=class_names,
-        normalize=True,
-        save_path=f"checkpoints/matrix.png",
-    )
-
-
-if __name__ == "__main__":
-    main()
+    plot_confusion_matrix(cm, class_names=class_names, normalize=normalize, save_path=save_path)

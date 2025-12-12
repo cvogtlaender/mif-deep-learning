@@ -6,6 +6,7 @@ from models.vit_finetune import ViTFinetune
 from models.resnet_finetune import ResNetFinetune
 from utils.dataset_utils import food_data_loaders
 from utils.train_utils import train_model, evaluate_model
+from utils.confusion_matrix import show_confusion_matrix
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -51,6 +52,8 @@ def main():
     plt.tight_layout()
     plt.savefig("checkpoints/loss_acc", dpi=300)
     plt.show()
+
+    show_confusion_matrix(model, test_loader, device)
 
 if __name__ == "__main__":
     main()
