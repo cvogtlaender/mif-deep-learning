@@ -44,9 +44,11 @@ def plot_confusion_matrix(cm, class_names, normalize=True, save_path="confusion_
     plt.savefig(save_path, dpi=300)
     plt.show()
 
+
 def show_confusion_matrix(model, data_loader, device, normalize=True, save_path=f"checkpoints/matrix.png"):
     preds, labels = get_predictions(model, data_loader, device)
     class_names = data_loader.dataset.classes
     cm = confusion_matrix(labels, preds)
 
-    plot_confusion_matrix(cm, class_names=class_names, normalize=normalize, save_path=save_path)
+    plot_confusion_matrix(cm, class_names=class_names,
+                          normalize=normalize, save_path=save_path)
