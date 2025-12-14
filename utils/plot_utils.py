@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 
-
 def get_predictions(model, data_loader, device):
     model.eval()
     all_preds = []
@@ -20,7 +19,6 @@ def get_predictions(model, data_loader, device):
             all_labels.extend(labels.cpu().numpy())
 
     return np.array(all_preds), np.array(all_labels)
-
 
 def plot_confusion_matrix(cm, class_names, normalize=True, save_path="confusion_matrix.png"):
     if normalize:
@@ -44,7 +42,6 @@ def plot_confusion_matrix(cm, class_names, normalize=True, save_path="confusion_
     plt.savefig(save_path, dpi=300)
     plt.show()
 
-
 def show_confusion_matrix(model, data_loader, device, normalize=True, save_path=f"checkpoints/matrix.png"):
     preds, labels = get_predictions(model, data_loader, device)
     class_names = data_loader.dataset.classes
@@ -52,3 +49,28 @@ def show_confusion_matrix(model, data_loader, device, normalize=True, save_path=
 
     plot_confusion_matrix(cm, class_names=class_names,
                           normalize=normalize, save_path=save_path)
+    
+def show_loss_acc_plot(history, save_path=f"checkpoints/loss_acc"):
+    epochs = range(1, len(history["train_loss"]) + 1)
+
+    plt.figure(figsize=(12, 5))
+
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, history["train_loss"], label="Train Loss")
+    plt.plot(epochs, history["val_loss"], label="Val Loss")
+    plt.title("Loss Verlauf")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, history["train_acc"], label="Train Acc")
+    plt.plot(epochs, history["val_acc"], label="Val Acc")
+    plt.title("Accuracy Verlauf")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy (%)")
+    plt.legend()
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300)
+    plt.show()

@@ -1,11 +1,10 @@
 import torch
 from torch import nn
-import matplotlib.pyplot as plt
 from pathlib import Path
 from models.vit_finetune import ViTFinetune
 from utils.dataset_utils import food_data_loaders
 from utils.train_utils import train_model, evaluate_model
-from utils.confusion_matrix import show_confusion_matrix
+from utils.plot_utils import show_confusion_matrix, show_loss_acc_plot
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -28,29 +27,7 @@ def main():
 
     print(f"Test Accuracy: {test_acc:.2f}% | Test Loss: {test_loss:.4f}")
 
-    epochs = range(1, len(history["train_loss"]) + 1)
-    plt.figure(figsize=(12, 5))
-
-    plt.subplot(1, 2, 1)
-    plt.plot(epochs, history["train_loss"], label="Train Loss")
-    plt.plot(epochs, history["val_loss"], label="Val Loss")
-    plt.title("Loss Verlauf")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.legend()
-
-    plt.subplot(1, 2, 2)
-    plt.plot(epochs, history["train_acc"], label="Train Acc")
-    plt.plot(epochs, history["val_acc"], label="Val Acc")
-    plt.title("Accuracy Verlauf")
-    plt.xlabel("Epoch")
-    plt.ylabel("Accuracy (%)")
-    plt.legend()
-
-    plt.tight_layout()
-    plt.savefig("checkpoints/loss_acc", dpi=300)
-    plt.show()
-
+    show_loss_acc_plot(history=history)
     show_confusion_matrix(model, test_loader, device)
 
 if __name__ == "__main__":
