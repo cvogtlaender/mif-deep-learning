@@ -1,18 +1,32 @@
 import torch
 import torch.nn as nn
+from torchvision.transforms.v2 import MixUp, CutMix, RandomChoice
 import torch.optim as optim
 from pathlib import Path
 import time
 
 
+#def accuracy(preds, labels):
+#    """Berechnet Accuracy in Prozent."""
+#    _, pred_classes = torch.max(preds, 1)
+#    return (pred_classes == labels).float().mean().item() * 100
+
 def accuracy(preds, labels):
-    """Berechnet Accuracy in Prozent."""
+    """Berechnet Accuracy in Prozent (unterstützt Hard- und Soft-Labels)."""
     _, pred_classes = torch.max(preds, 1)
-    return (pred_classes == labels).float().mean().item() * 100
+
+    # Fall 1: harte Labels (kein Mixup)
+    if labels.dim() == 1:
+        return (pred_classes == labels).float().mean().item() * 100
+
+    # Fall 2: Soft Labels (Mixup / CutMix)
+    else:
+        hard_labels = labels.argmax(dim=1)
+        return (pred_classes == hard_labels).float().mean().item() * 100
 
 
 def train_model(model, train_loader, val_loader, device, criterion, num_epochs=10, lr=1e-4,
-                optimizer_type="adamw", scheduler_type="cosine", save_path="checkpoints/best_model.pth", early_stopping_patience=5):
+                optimizer_type="adamw", scheduler_type="cosine", save_path="checkpoints/best_model.pth", early_stopping_patience=5, use_mixup=False, num_classes=101):
 
     Path(save_path).parent.mkdir(exist_ok=True)
 
@@ -34,6 +48,14 @@ def train_model(model, train_loader, val_loader, device, criterion, num_epochs=1
     else:
         scheduler = None
 
+    if use_mixup:
+        mixup_fn = RandomChoice([
+            MixUp(num_classes=num_classes, alpha=0.8),
+            CutMix(num_classes=num_classes, alpha=1.0)
+        ])
+    else:
+        mixup_fn = None
+
     best_val_acc = 0.0
     epochs_no_improve = 0
     history = {"train_loss": [], "val_loss": [],
@@ -48,6 +70,10 @@ def train_model(model, train_loader, val_loader, device, criterion, num_epochs=1
         for images, labels in train_loader:
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
+
+            if mixup_fn is not None:
+                images, labels = mixup_fn(images, labels)
+
             outputs = model(images)
             loss = criterion(outputs, labels)
             loss.backward()
