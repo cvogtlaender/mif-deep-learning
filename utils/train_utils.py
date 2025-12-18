@@ -5,21 +5,11 @@ import torch.optim as optim
 from pathlib import Path
 import time
 
-
-#def accuracy(preds, labels):
-#    """Berechnet Accuracy in Prozent."""
-#    _, pred_classes = torch.max(preds, 1)
-#    return (pred_classes == labels).float().mean().item() * 100
-
 def accuracy(preds, labels):
-    """Berechnet Accuracy in Prozent (unterstützt Hard- und Soft-Labels)."""
     _, pred_classes = torch.max(preds, 1)
 
-    # Fall 1: harte Labels (kein Mixup)
     if labels.dim() == 1:
         return (pred_classes == labels).float().mean().item() * 100
-
-    # Fall 2: Soft Labels (Mixup / CutMix)
     else:
         hard_labels = labels.argmax(dim=1)
         return (pred_classes == hard_labels).float().mean().item() * 100
