@@ -2,10 +2,6 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
-from models.resnet_finetune import ResNetFinetune
-from models.vit_finetune import ViTFinetune
-from utils.dataset_utils import food_data_loaders
-
 
 def get_predictions(model, data_loader, device):
     model.eval()
@@ -23,7 +19,6 @@ def get_predictions(model, data_loader, device):
             all_labels.extend(labels.cpu().numpy())
 
     return np.array(all_preds), np.array(all_labels)
-
 
 def plot_confusion_matrix(cm, class_names, normalize=True, save_path="confusion_matrix.png"):
     if normalize:
@@ -47,35 +42,35 @@ def plot_confusion_matrix(cm, class_names, normalize=True, save_path="confusion_
     plt.savefig(save_path, dpi=300)
     plt.show()
 
-
-def main():
-    checkpoint_path = "checkpoints/best_model.pth"
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print("Device:", device)
-
-    train_loader, test_loader, val_loader = food_data_loaders
-    class_names = test_loader.dataset.classes
-    num_classes = len(class_names)
-
-    model = ResNetFinetune(
-        num_classes=num_classes, pretrained=True, freeze_backbone=False
-    )
-
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
-    model = model.to(device)
-
-    preds, labels = get_predictions(model, test_loader, device)
-
+def show_confusion_matrix(model, data_loader, device, normalize=True, save_path=f"checkpoints/matrix.png"):
+    preds, labels = get_predictions(model, data_loader, device)
+    class_names = data_loader.dataset.classes
     cm = confusion_matrix(labels, preds)
 
-    plot_confusion_matrix(
-        cm,
-        class_names=class_names,
-        normalize=True,
-        save_path=f"checkpoints/matrix.png",
-    )
+    plot_confusion_matrix(cm, class_names=class_names,
+                          normalize=normalize, save_path=save_path)
+    
+def show_loss_acc_plot(history, save_path=f"checkpoints/loss_acc"):
+    epochs = range(1, len(history["train_loss"]) + 1)
 
+    plt.figure(figsize=(12, 5))
 
-if __name__ == "__main__":
-    main()
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, history["train_loss"], label="Train Loss")
+    plt.plot(epochs, history["val_loss"], label="Val Loss")
+    plt.title("Loss Verlauf")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, history["train_acc"], label="Train Acc")
+    plt.plot(epochs, history["val_acc"], label="Val Acc")
+    plt.title("Accuracy Verlauf")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy (%)")
+    plt.legend()
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300)
+    plt.show()

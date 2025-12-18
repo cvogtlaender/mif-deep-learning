@@ -1,17 +1,23 @@
 import torch
 import torch.nn as nn
+from torchvision.transforms.v2 import MixUp, CutMix, RandomChoice
 import torch.optim as optim
 from pathlib import Path
 import time
 
 def accuracy(preds, labels):
-    """Berechnet Accuracy in Prozent."""
     _, pred_classes = torch.max(preds, 1)
-    return (pred_classes == labels).float().mean().item() * 100
+
+    if labels.dim() == 1:
+        return (pred_classes == labels).float().mean().item() * 100
+    else:
+        hard_labels = labels.argmax(dim=1)
+        return (pred_classes == hard_labels).float().mean().item() * 100
+
 
 def train_model(model, train_loader, val_loader, device, criterion, num_epochs=10, lr=1e-4,
-                optimizer_type="adamw", scheduler_type="cosine", save_path="checkpoints/best_model.pth", early_stopping_patience=5):
-    
+                optimizer_type="adamw", scheduler_type="cosine", save_path="checkpoints/best_model.pth", early_stopping_patience=5, use_mixup=False, num_classes=101):
+
     Path(save_path).parent.mkdir(exist_ok=True)
 
     if optimizer_type.lower() == "adamw":
@@ -24,15 +30,26 @@ def train_model(model, train_loader, val_loader, device, criterion, num_epochs=1
         raise ValueError(f"Unbekannter Optimizer: {optimizer_type}")
 
     if scheduler_type.lower() == "cosine":
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=num_epochs)
     elif scheduler_type.lower() == "step":
-        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.5)
+        scheduler = optim.lr_scheduler.StepLR(
+            optimizer, step_size=5, gamma=0.5)
     else:
         scheduler = None
 
+    if use_mixup:
+        mixup_fn = RandomChoice([
+            MixUp(num_classes=num_classes, alpha=0.8),
+            CutMix(num_classes=num_classes, alpha=1.0)
+        ])
+    else:
+        mixup_fn = None
+
     best_val_acc = 0.0
     epochs_no_improve = 0
-    history = {"train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
+    history = {"train_loss": [], "val_loss": [],
+               "train_acc": [], "val_acc": []}
 
     for epoch in range(num_epochs):
         start_time = time.time()
@@ -43,6 +60,10 @@ def train_model(model, train_loader, val_loader, device, criterion, num_epochs=1
         for images, labels in train_loader:
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
+
+            if mixup_fn is not None:
+                images, labels = mixup_fn(images, labels)
+
             outputs = model(images)
             loss = criterion(outputs, labels)
             loss.backward()
@@ -96,6 +117,7 @@ def train_model(model, train_loader, val_loader, device, criterion, num_epochs=1
 
     print(f"\nTraining abgeschlossen. Beste Val Accuracy: {best_val_acc:.2f}%")
     return model, history
+
 
 def evaluate_model(model, data_loader, criterion, device):
     model.eval()
